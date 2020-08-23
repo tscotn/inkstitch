@@ -1,15 +1,18 @@
 import math
+import os
+import subprocess
+import tempfile
 
 import inkex
 import simplepath
 import simplestyle
 import simpletransform
 
-from ..i18n import _
-from ..utils import Point, cache
 from .tags import (INKSCAPE_GROUPMODE, INKSCAPE_LABEL, INKSTITCH_ATTRIBS,
                    SVG_DEFS_TAG, SVG_GROUP_TAG, SVG_PATH_TAG)
 from .units import PIXELS_PER_MM, get_viewbox_transform
+from ..i18n import _
+from ..utils import Point, cache, get_inkscape
 
 # The stitch vector path looks like this:
 #  _______
@@ -253,3 +256,43 @@ def render_stitch_plan(svg, stitch_plan, realistic=False, visual_commands=True):
             defs = inkex.etree.SubElement(svg, SVG_DEFS_TAG)
 
         defs.append(inkex.etree.fromstring(realistic_filter))
+
+
+def thumbnail(node):
+    """Produce a PNG thumbnail of a given SVG node."""
+
+    inkscape = get_inkscape()
+
+    if inkscape is None:
+        import sys
+        print >> sys.stderr, "couldn't find inkscape"
+        return None
+
+    svg_file = tempfile.NamedTemporaryFile(suffix=".svg", delete=False)
+    png_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+
+    node.getroottree().write(svg_file)
+
+    svg_file.close()
+    png_file.close()
+
+    try:
+        # using check_output so that we get the output in the exception handler
+        subprocess.check_output([inkscape,
+                                 "--export-png=" + png_file.name,
+                                 "--export-id=" + node.get('id'),
+                                 "--export-id-only",
+                                 "--export-background-opacity=0.0",
+                                 "--export-width=100",
+                                 svg_file.name],
+                                stderr=subprocess.STDOUT)
+        with open(png_file.name, "rb") as png:
+            return png.read()
+    except subprocess.CalledProcessError, err:
+        import sys
+        print >> sys.stderr, "error: ", err
+        print >> sys.stderr, err.output
+        return None
+    finally:
+        os.unlink(svg_file.name)
+        os.unlink(png_file.name)

@@ -16,6 +16,11 @@ export default new Router({
       component: require('@/components/InstallPalettes').default
     },
     {
+      path: '/params',
+      name: 'params',
+      component: require('@/components/Params').default
+    },
+    {
       path: '*',
       redirect: '/'
     }

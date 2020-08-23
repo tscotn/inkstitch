@@ -8,6 +8,7 @@ import requests
 from flask import Flask, g, request
 
 from .install import install
+from .params import params
 from .simulator import simulator
 from .stitch_plan import stitch_plan
 from ..utils.json import InkStitchJSONEncoder
@@ -33,6 +34,7 @@ class APIServer(Thread):
         self.app.register_blueprint(simulator, url_prefix="/simulator")
         self.app.register_blueprint(stitch_plan, url_prefix="/stitch_plan")
         self.app.register_blueprint(install, url_prefix="/install")
+        self.app.register_blueprint(params, url_prefix="/params")
 
         @self.app.before_request
         def store_extension():

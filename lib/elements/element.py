@@ -1,19 +1,17 @@
 import sys
 from copy import deepcopy
 
-import tinycss2
-
 import cubicsuperpath
+import tinycss2
 from cspsubdiv import cspsubdiv
 
+from .svg_objects import circle_to_path, ellipse_to_path, rect_to_path
 from ..commands import find_commands
 from ..i18n import _
 from ..svg import PIXELS_PER_MM, apply_transforms, convert_length, get_doc_size
-from ..svg.tags import (EMBROIDERABLE_TAGS, INKSCAPE_LABEL, INKSTITCH_ATTRIBS,
-                        SVG_CIRCLE_TAG, SVG_ELLIPSE_TAG, SVG_GROUP_TAG,
-                        SVG_OBJECT_TAGS, SVG_RECT_TAG, SVG_LINK_TAG)
+from ..svg.tags import (EMBROIDERABLE_TAGS, INKSCAPE_LABEL, INKSTITCH_ATTRIBS, SVG_CIRCLE_TAG, SVG_ELLIPSE_TAG, SVG_GROUP_TAG, SVG_LINK_TAG,
+                        SVG_OBJECT_TAGS, SVG_RECT_TAG)
 from ..utils import cache
-from .svg_objects import circle_to_path, ellipse_to_path, rect_to_path
 
 
 class Patch:
@@ -83,7 +81,7 @@ class EmbroideryElement(object):
                 self.replace_legacy_param(attrib)
                 legacy_attribs = True
         if legacy_attribs and not self.get_param('fill_underlay', ""):
-            # defaut setting for fill_underlay has changed
+            # default setting for fill_underlay has changed
             self.set_param('fill_underlay', False)
 
     @property
@@ -102,8 +100,12 @@ class EmbroideryElement(object):
         return params
 
     def replace_legacy_param(self, param):
-        value = self.node.get(param, "").strip()
-        self.set_param(param[10:], value)
+        # remove "embroider_" prefix
+        new_param = param[10:]
+        if new_param in INKSTITCH_ATTRIBS:
+            value = self.node.get(param, "").strip()
+            self.set_param(param[10:], value)
+
         del self.node.attrib[param]
 
     @cache
